@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: matchme_db
+      POSTGRES_USER: matchme_user
+      POSTGRES_PASSWORD: matchme_pass
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matchme_user -d matchme_db"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: sh -c "python manage.py migrate --noinput && python manage.py runserver 0.0.0.0:8000"
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: matchme_db
+      POSTGRES_USER: matchme_user
+      POSTGRES_PASSWORD: matchme_pass
+      DJANGO_SECRET_KEY: dev-secret-key
+      DJANGO_DEBUG: "1"
+    ports:
+      - "8002:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - media_data:/app/media
+
+volumes:
+  pgdata:
+  media_data:
