@@ -33,5 +33,6 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, verbose_name="О себе")
 
     class Meta:
+        ordering = ["id"]  # стабильная пагинация ленты профилей
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"

@@ -76,8 +76,20 @@ class ProfileReactionSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at"]
 
     def validate(self, attrs):
-        if attrs["to_user_id"] == self.context["request"].user.id:
-            raise serializers.ValidationError("Нельзя оценивать самого себя.")
+        to_user = attrs.get("to_user")
+        request = self.context.get("request")
+        if not (to_user and request and request.user.is_authenticated):
+            return attrs
+        if to_user.id == request.user.id:
+            raise serializers.ValidationError(
+                {"to_user": "Нельзя оценивать самого себя."}
+            )
+        if ProfileReaction.objects.filter(
+            from_user=request.user, to_user=to_user
+        ).exists():
+            raise serializers.ValidationError(
+                {"to_user": "Вы уже оценили этого пользователя."}
+            )
         return attrs
 
 
